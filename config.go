@@ -11,10 +11,10 @@ type Config struct {
 }
 
 type Account struct {
-	Name       string                         `json:"name"`
-	ExternalID string                         `json:"externalId"`
-	Creds      APICreds                       `json:"creds"`
-	Sources    map[SourceName][]RssFeedSource `json:"sources"`
+	Name      string                         `json:"name"`
+	TwitterID string                         `json:"twitterId"`
+	Creds     APICreds                       `json:"creds"`
+	Sources   map[SourceName][]RssFeedSource `json:"sources"`
 }
 
 func (a *Account) GetSources() []Source {

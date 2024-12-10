@@ -1,13 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 )
 
 const (
 	ConfigFilePath string        = "config.json"
-	Timeout        time.Duration = 10000
+	Timeout        time.Duration = time.Second * 10
 )
 
 func main() {
@@ -15,5 +16,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("Autoposter Starting")
 	ap.Run()
 }

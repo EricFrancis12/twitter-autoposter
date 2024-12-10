@@ -25,7 +25,8 @@ func NewSource(sourceName SourceName) Source {
 }
 
 type RssFeedSource struct {
-	Url string
+	Url      string `json:"url"`
+	TweetFmt string `json:"tweetFmt"`
 }
 
 func (r RssFeedSource) GetSourceName() SourceName {

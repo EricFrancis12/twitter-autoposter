@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
+
 	"github.com/michimani/gotwi"
-	"github.com/michimani/gotwi/user/mute/types"
+	"github.com/michimani/gotwi/tweet/managetweet"
+	"github.com/michimani/gotwi/tweet/managetweet/types"
 )
 
 type APICreds struct {
@@ -74,7 +77,25 @@ func (tcm *TwitterClientManager) Remove(creds APICreds) bool {
 	return ok
 }
 
-func (tcm *TwitterClientManager) PublishTweet(text string) (*types.CreateOutput, error) {
-	// TODO: ...
-	return nil, nil
+func (tcm *TwitterClientManager) PublishTweet(creds APICreds, text string) (*types.CreateOutput, error) {
+	c, err := tcm.Get(creds)
+	if err != nil {
+		return nil, err
+	}
+
+	p := &types.CreateInput{
+		Text: gotwi.String(text),
+		Media: &types.CreateInputMedia{
+			MediaIDs: []string{},
+		},
+	}
+
+	co, err := managetweet.Create(context.Background(), c.Client, p)
+	if err != nil {
+		// Remove creds from map on publish failure
+		tcm.Remove(creds)
+		return nil, err
+	}
+
+	return co, nil
 }

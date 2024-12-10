@@ -7,13 +7,13 @@ import (
 
 type AutoPoster struct {
 	configFilePath string
-	timeout        time.Duration
+	timeout        time.Duration // TODO: impliment a max and min timeout to reduce chance of bot detection
 	db             *DB
 	tcm            TwitterClientManager
 }
 
 func NewAutoPoster(configFilePath string, timeout time.Duration) (*AutoPoster, error) {
-	db, err := NewDB()
+	db, err := NewDB(DriverName, DataSourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -28,12 +28,12 @@ func NewAutoPoster(configFilePath string, timeout time.Duration) (*AutoPoster, e
 
 func (a *AutoPoster) Run() {
 	for {
+		fmt.Println("Reading config file")
+
 		config, err := ReadConfigFromJsonFile(ConfigFilePath)
 		if err != nil {
 			PrintErrWithTimeout(err, a.timeout)
 		}
-
-		fmt.Println(config)
 
 		for _, acct := range config.Accounts {
 			for _, source := range acct.GetSources() {
@@ -43,7 +43,7 @@ func (a *AutoPoster) Run() {
 					continue
 				}
 
-				savedPosts, err := a.db.GetPostsByExternalID(acct.ExternalID)
+				savedPosts, err := a.db.GetPostsByTwitterID(acct.TwitterID)
 				if err != nil {
 					PrintErrWithTimeout(err, a.timeout)
 					continue
@@ -66,18 +66,20 @@ func (a *AutoPoster) Run() {
 						continue
 					}
 
-					_, err := a.tcm.PublishTweet(text)
+					_, err := a.tcm.PublishTweet(acct.Creds, text)
 					if err != nil {
 						PrintErrWithTimeout(err, a.timeout)
 						continue
 					}
 
-					if err := a.db.InsertPost(p.ToSaved()); err != nil {
+					if err := a.db.InsertPost(p.ToSaved(acct.TwitterID)); err != nil {
 						PrintErr(err)
 					}
 				}
 
 			}
 		}
+
+		time.Sleep(a.timeout)
 	}
 }

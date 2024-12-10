@@ -7,9 +7,10 @@ type Post struct {
 	Title string
 }
 
-func (p Post) ToSaved() SavedPost {
+func (p Post) ToSaved(twitterID string) SavedPost {
 	return SavedPost{
-		ID:   uuid.NewString(),
-		Post: p,
+		ID:        uuid.NewString(),
+		TwitterID: twitterID,
+		Post:      p,
 	}
 }
