@@ -1,2 +1,6 @@
+*.exe
+*.msi
+twitter-autoposter
+
 config.json
 *.db
