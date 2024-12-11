@@ -47,7 +47,14 @@ func (r RssFeedSource) FetchPosts() ([]Post, error) {
 	}
 
 	for _, item := range feed.Items {
-		posts = append(posts, *NewPost(item.Link, item.Title))
+		post, err := NewPost(item.Link, item.Title)
+		if err != nil {
+			continue
+		}
+
+		if !post.In(posts) {
+			posts = append(posts, *post)
+		}
 	}
 
 	return posts, nil

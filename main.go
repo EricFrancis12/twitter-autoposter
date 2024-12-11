@@ -8,7 +8,7 @@ import (
 const (
 	ConfigFilePath string = "config.json"
 	// TODO: Impliment a max and min timeout to reduce chance of bot detection,
-	// and also make it configurable.
+	// and also make it configurable via flags.
 	Timeout time.Duration = time.Minute * 18
 )
 

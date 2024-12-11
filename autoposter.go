@@ -47,7 +47,7 @@ func (a *AutoPoster) Run() {
 					continue
 				}
 
-				savedPosts, err := a.db.GetPostsByTwitterID(acct.TwitterID)
+				savedPosts, err := a.db.GetSavedPostsByTwitterID(acct.TwitterID)
 				if err != nil {
 					PrintErrWithTimeout(err, a.timeout)
 					continue
@@ -59,10 +59,8 @@ func (a *AutoPoster) Run() {
 					freshPosts = posts
 				} else {
 					for _, post := range posts {
-						for _, savedPost := range savedPosts {
-							if post.Url != savedPost.Url {
-								freshPosts = append(freshPosts, post)
-							}
+						if !post.InSaved(savedPosts) {
+							freshPosts = append(freshPosts, post)
 						}
 					}
 				}
@@ -82,7 +80,7 @@ func (a *AutoPoster) Run() {
 						continue
 					}
 
-					if err := a.db.InsertPost(p.ToSaved(acct.TwitterID)); err != nil {
+					if err := a.db.InsertSavedPost(p.ToSaved(acct.TwitterID)); err != nil {
 						PrintErr(err)
 					}
 

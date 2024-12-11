@@ -35,7 +35,7 @@ func NewDB(driverName string, dataSourceName string) (*DB, error) {
 		create table if not exists %s (
 			id text not null primary key,
 			twitter_id text not null,
-			url text not null,
+			url text not null unique,
 			title text not null
 		);
 	`, PostsTableName)
@@ -52,33 +52,33 @@ func NewDB(driverName string, dataSourceName string) (*DB, error) {
 	}, nil
 }
 
-func (db DB) InsertPost(sp SavedPost) error {
-	query := fmt.Sprintf(`
+func (db DB) InsertSavedPost(sp SavedPost) error {
+	row := db.Client.QueryRow(fmt.Sprintf(`select * from %s where url = "%s"`, PostsTableName, sp.Url))
+	if row.Scan() != sql.ErrNoRows {
+		return fmt.Errorf(`SavedPost with url "%s" already present in db`, sp.Url)
+	}
+
+	insertQuery := fmt.Sprintf(`
 		insert into %s (id, twitter_id, url, title) 
 		values (?, ?, ?, ?);
 	`, PostsTableName)
 
-	// Remove query string to ensure proper url match via autoposter
-	url, err := stripQueryString(sp.Url)
-	if err != nil {
-		return err
-	}
-
-	if _, err := db.Client.Exec(query, sp.ID, sp.TwitterID, url, sp.Title); err != nil {
+	if _, err := db.Client.Exec(insertQuery, sp.ID, sp.TwitterID, sp.Url, sp.Title); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (db DB) GetPostsByTwitterID(twitterID string) ([]SavedPost, error) {
+func (db DB) GetSavedPostsByTwitterID(twitterID string) ([]SavedPost, error) {
+	var savedPosts []SavedPost
+
 	rows, err := db.Client.Query(fmt.Sprintf(`select * from %s where twitter_id = "%s"`, PostsTableName, twitterID))
 	if err != nil {
-		return []SavedPost{}, err
+		return savedPosts, err
 	}
 	defer rows.Close()
 
-	var savedPosts []SavedPost
 	for rows.Next() {
 		sp, err := scanIntoSavedPost(rows)
 		if err != nil {
