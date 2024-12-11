@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 
 	"github.com/EricFrancis12/stripol"
+	"github.com/mmcdole/gofeed"
 )
 
 type SourceName string
@@ -39,23 +38,19 @@ func (r RssFeedSource) GetSourceName() SourceName {
 }
 
 func (r RssFeedSource) FetchPosts() ([]Post, error) {
-	// TODO: ...
+	var posts []Post
 
-	resp, err := http.Get(r.Url)
+	fp := gofeed.NewParser()
+	feed, err := fp.ParseURL(r.Url)
 	if err != nil {
-		return []Post{}, err
-	}
-	defer resp.Body.Close()
-
-	// Read the entire response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return []Post{}, err
+		return posts, err
 	}
 
-	fmt.Println(string(body))
+	for _, item := range feed.Items {
+		posts = append(posts, *NewPost(item.Link, item.Title))
+	}
 
-	return []Post{}, nil
+	return posts, nil
 }
 
 func (r RssFeedSource) FmtPost(post Post) string {

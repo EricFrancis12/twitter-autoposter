@@ -7,6 +7,13 @@ type Post struct {
 	Title string
 }
 
+func NewPost(url string, title string) *Post {
+	return &Post{
+		Url:   url,
+		Title: title,
+	}
+}
+
 func (p Post) ToSaved(twitterID string) SavedPost {
 	return SavedPost{
 		ID:        uuid.NewString(),

@@ -1,3 +1,22 @@
 {
-    "accounts": []
+    "accounts": [
+        {
+            "name": "OPTIONAL",
+            "twitterId": "REPLACE",
+            "creds": {
+                "apiKey": "REPLACE",
+                "apiKeySecret": "REPLACE",
+                "oAuthToken": "REPLACE",
+                "oAuthTokenSecret": "REPLACE"
+            },
+            "sources": {
+                "rss": [
+                    {
+                        "url": "https://example.com/feed",
+                        "tweetFmt": "You can substitute in these properties derived from the Post struct like this: {{ title }} {{ url }} {{ escapedUrl }}"
+                    }
+                ]
+            }
+        }
+    ]
 }

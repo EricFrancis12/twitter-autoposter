@@ -7,7 +7,7 @@ import (
 
 type AutoPoster struct {
 	configFilePath string
-	timeout        time.Duration // TODO: impliment a max and min timeout to reduce chance of bot detection
+	timeout        time.Duration
 	db             *DB
 	tcm            TwitterClientManager
 }
@@ -28,15 +28,19 @@ func NewAutoPoster(configFilePath string, timeout time.Duration) (*AutoPoster, e
 
 func (a *AutoPoster) Run() {
 	for {
-		fmt.Println("Reading config file")
+		PrintWithTimestamp("Reading config file")
 
 		config, err := ReadConfigFromJsonFile(ConfigFilePath)
 		if err != nil {
 			PrintErrWithTimeout(err, a.timeout)
 		}
 
+		PrintWithTimestampf("Starting range over %d Accounts", len(config.Accounts))
 		for _, acct := range config.Accounts {
-			for _, source := range acct.GetSources() {
+			sources := acct.GetSources()
+
+			PrintWithTimestampf("Starting range over %d Sources", len(sources))
+			for _, source := range sources {
 				posts, err := source.FetchPosts()
 				if err != nil {
 					PrintErrWithTimeout(err, a.timeout)
@@ -51,14 +55,19 @@ func (a *AutoPoster) Run() {
 
 				// Compare posts with post history for this account
 				var freshPosts []Post
-				for _, post := range posts {
-					for _, savedPost := range savedPosts {
-						if post.Url != savedPost.Url {
-							freshPosts = append(freshPosts, post)
+				if len(savedPosts) <= 0 {
+					freshPosts = posts
+				} else {
+					for _, post := range posts {
+						for _, savedPost := range savedPosts {
+							if post.Url != savedPost.Url {
+								freshPosts = append(freshPosts, post)
+							}
 						}
 					}
 				}
 
+				PrintWithTimestampf("Starting range over %d Fresh Posts", len(freshPosts))
 				for _, p := range freshPosts {
 					text := source.FmtPost(p)
 					if text == "" {
@@ -66,6 +75,7 @@ func (a *AutoPoster) Run() {
 						continue
 					}
 
+					PrintWithTimestampf("Publishing tweet to %s: %s", acct.Name, text)
 					_, err := a.tcm.PublishTweet(acct.Creds, text)
 					if err != nil {
 						PrintErrWithTimeout(err, a.timeout)
@@ -75,11 +85,13 @@ func (a *AutoPoster) Run() {
 					if err := a.db.InsertPost(p.ToSaved(acct.TwitterID)); err != nil {
 						PrintErr(err)
 					}
+
+					Sleep(a.timeout)
 				}
 
 			}
 		}
 
-		time.Sleep(a.timeout)
+		Sleep(a.timeout)
 	}
 }

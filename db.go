@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	TableName      string = "POSTS"
+	PostsTableName string = "POSTS"
 	DriverName     string = "sqlite3"
 	DataSourceName string = "./data.db"
 )
@@ -38,7 +38,7 @@ func NewDB(driverName string, dataSourceName string) (*DB, error) {
 			url text not null,
 			title text not null
 		);
-	`, TableName)
+	`, PostsTableName)
 
 	_, err = db.Exec(query)
 	if err != nil {
@@ -56,7 +56,7 @@ func (db DB) InsertPost(sp SavedPost) error {
 	query := fmt.Sprintf(`
 		insert into %s (id, twitter_id, url, title) 
 		values (?, ?, ?, ?);
-	`, TableName)
+	`, PostsTableName)
 
 	// Remove query string to ensure proper url match via autoposter
 	url, err := stripQueryString(sp.Url)
@@ -72,7 +72,7 @@ func (db DB) InsertPost(sp SavedPost) error {
 }
 
 func (db DB) GetPostsByTwitterID(twitterID string) ([]SavedPost, error) {
-	rows, err := db.Client.Query(fmt.Sprintf("select * from %s where twitter_id = %s", TableName, twitterID))
+	rows, err := db.Client.Query(fmt.Sprintf(`select * from %s where twitter_id = "%s"`, PostsTableName, twitterID))
 	if err != nil {
 		return []SavedPost{}, err
 	}

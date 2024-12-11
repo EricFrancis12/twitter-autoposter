@@ -1,14 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"time"
 )
 
 const (
-	ConfigFilePath string        = "config.json"
-	Timeout        time.Duration = time.Second * 10
+	ConfigFilePath string = "config.json"
+	// TODO: Impliment a max and min timeout to reduce chance of bot detection,
+	// and also make it configurable.
+	Timeout time.Duration = time.Minute * 18
 )
 
 func main() {
@@ -16,6 +17,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Autoposter Starting")
+	PrintWithTimestamp("Autoposter Starting")
 	ap.Run()
 }

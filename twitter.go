@@ -28,21 +28,23 @@ func NewTwitterClient(apiKey, apiKeySecret, OAuthToken, OAuthTokenSecret string)
 		OAuthToken:           OAuthToken,
 		OAuthTokenSecret:     OAuthTokenSecret,
 	}
+
 	c, err := gotwi.NewClient(in)
 	if err != nil {
 		return nil, err
 	}
+
 	creds := APICreds{
 		APIKey:           apiKey,
 		APIKeySecret:     apiKeySecret,
 		OAuthToken:       OAuthToken,
 		OAuthTokenSecret: OAuthTokenSecret,
 	}
-	twc := &TwitterClient{
-		c,
-		creds,
-	}
-	return twc, nil
+
+	return &TwitterClient{
+		Client: c,
+		creds:  creds,
+	}, nil
 }
 
 type TwitterClientManager struct {
@@ -57,7 +59,9 @@ func NewTwitterClientManager() TwitterClientManager {
 
 func (tcm *TwitterClientManager) Get(creds APICreds) (*TwitterClient, error) {
 	client, ok := tcm.Clients[creds]
-	if ok {
+	if client == nil {
+		tcm.Remove(creds)
+	} else if ok {
 		return client, nil
 	}
 
@@ -85,9 +89,6 @@ func (tcm *TwitterClientManager) PublishTweet(creds APICreds, text string) (*typ
 
 	p := &types.CreateInput{
 		Text: gotwi.String(text),
-		Media: &types.CreateInputMedia{
-			MediaIDs: []string{},
-		},
 	}
 
 	co, err := managetweet.Create(context.Background(), c.Client, p)
