@@ -6,24 +6,32 @@ import (
 )
 
 type AutoPoster struct {
-	configFilePath string
-	timeout        time.Duration
 	db             *DB
-	tcm            TwitterClientManager
+	tcm            *TwitterClientManager
+	configFilePath string
+	minTimeout     time.Duration
+	maxTimeout     time.Duration
+	errTimeout     time.Duration
 }
 
-func NewAutoPoster(configFilePath string, timeout time.Duration) (*AutoPoster, error) {
+func NewAutoPoster(configFilePath string, minTimeout, maxTimeout, errTimeout time.Duration) (*AutoPoster, error) {
 	db, err := NewDB(DriverName, DataSourceName)
 	if err != nil {
 		return nil, err
 	}
 
 	return &AutoPoster{
-		configFilePath: configFilePath,
-		timeout:        timeout,
 		db:             db,
 		tcm:            NewTwitterClientManager(),
+		configFilePath: configFilePath,
+		minTimeout:     minTimeout,
+		maxTimeout:     maxTimeout,
+		errTimeout:     errTimeout,
 	}, nil
+}
+
+func (a *AutoPoster) Timeout() time.Duration {
+	return RandDurInRange(a.minTimeout, a.maxTimeout)
 }
 
 func (a *AutoPoster) Run() {
@@ -32,7 +40,7 @@ func (a *AutoPoster) Run() {
 
 		config, err := ReadConfigFromJsonFile(ConfigFilePath)
 		if err != nil {
-			PrintErrWithTimeout(err, a.timeout)
+			PrintErrWithTimeout(err, a.errTimeout)
 		}
 
 		PrintWithTimestampf("Starting range over %d Accounts", len(config.Accounts))
@@ -43,13 +51,13 @@ func (a *AutoPoster) Run() {
 			for _, source := range sources {
 				posts, err := source.FetchPosts()
 				if err != nil {
-					PrintErrWithTimeout(err, a.timeout)
+					PrintErrWithTimeout(err, a.errTimeout)
 					continue
 				}
 
 				savedPosts, err := a.db.GetSavedPostsByTwitterID(acct.TwitterID)
 				if err != nil {
-					PrintErrWithTimeout(err, a.timeout)
+					PrintErrWithTimeout(err, a.errTimeout)
 					continue
 				}
 
@@ -69,14 +77,14 @@ func (a *AutoPoster) Run() {
 				for _, p := range freshPosts {
 					text := source.FmtPost(p)
 					if text == "" {
-						PrintErrWithTimeout(fmt.Errorf("missing tweet text"), a.timeout)
+						PrintErrWithTimeout(fmt.Errorf("missing tweet text"), a.errTimeout)
 						continue
 					}
 
 					PrintWithTimestampf("Publishing tweet to %s: %s", acct.Name, text)
 					_, err := a.tcm.PublishTweet(acct.Creds, text)
 					if err != nil {
-						PrintErrWithTimeout(err, a.timeout)
+						PrintErrWithTimeout(err, a.Timeout())
 						continue
 					}
 
@@ -84,12 +92,12 @@ func (a *AutoPoster) Run() {
 						PrintErr(err)
 					}
 
-					Sleep(a.timeout)
+					Sleep(a.Timeout())
 				}
 
 			}
 		}
 
-		Sleep(a.timeout)
+		Sleep(a.Timeout())
 	}
 }

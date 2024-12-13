@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"net/url"
 	"time"
 )
@@ -13,6 +14,18 @@ func Some[T any](arr []T, f func(T) bool) bool {
 		}
 	}
 	return false
+}
+
+func RandDurInRange(minDur, maxDur time.Duration) time.Duration {
+	if minDur > maxDur {
+		minDur, maxDur = maxDur, minDur
+	}
+
+	source := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(source)
+
+	randomMillis := r.Int63n(int64(maxDur - minDur))
+	return minDur + time.Duration(randomMillis)
 }
 
 func stripQueryString(u string) (string, error) {

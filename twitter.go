@@ -51,8 +51,8 @@ type TwitterClientManager struct {
 	Clients map[APICreds]*TwitterClient
 }
 
-func NewTwitterClientManager() TwitterClientManager {
-	return TwitterClientManager{
+func NewTwitterClientManager() *TwitterClientManager {
+	return &TwitterClientManager{
 		Clients: make(map[APICreds]*TwitterClient),
 	}
 }
