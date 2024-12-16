@@ -35,7 +35,7 @@ func NewDB(driverName string, dataSourceName string) (*DB, error) {
 		create table if not exists %s (
 			id text not null primary key,
 			twitter_id text not null,
-			url text not null unique,
+			url text not null,
 			title text not null
 		);
 	`, PostsTableName)
